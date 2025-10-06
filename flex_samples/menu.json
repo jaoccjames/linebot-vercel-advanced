@@ -1,0 +1,28 @@
+{
+  "type": "bubble",
+  "hero": {
+    "type": "image",
+    "url": "https://picsum.photos/600/400",
+    "size": "full",
+    "aspectRatio": "2:1",
+    "aspectMode": "cover"
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "md",
+    "contents": [
+      {"type": "text", "text": "範例選單", "weight": "bold", "size": "xl"},
+      {"type": "text", "text": "點按下方按鈕試試", "size": "sm", "color": "#888888"}
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "sm",
+    "contents": [
+      {"type": "button", "style": "primary", "action": {"type": "postback", "label": "查看說明", "data": "action=help"}},
+      {"type": "button", "style": "secondary", "action": {"type": "message", "label": "回聲測試", "text": "echo hello"}}
+    ]
+  }
+}
