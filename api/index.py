@@ -3,7 +3,6 @@ import os
 import logging
 from flask import Flask, request, abort, jsonify
 
-# 可在本地使用 .env；在 Vercel 請用 Project → Environment Variables
 try:
     from dotenv import load_dotenv  # type: ignore
     load_dotenv()
@@ -32,28 +31,18 @@ from linebot.v3.messaging import (
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
-# ── 讀環境變數 ────────────────────────────────────────────────────────────────
 CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "")
 CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET", "")
-
-# 在沒有設定金鑰時，/api 能健康檢查，但 /api/webhook 會明確拒絕
 HAS_CREDS = bool(CHANNEL_ACCESS_TOKEN and CHANNEL_SECRET)
 
-# SDK 設定，Messaging API 會在使用時建立連線
 configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
 
-# 重要：避免與 Vercel 的入口名稱 "handler" 衝突，改名為 line_handler
+# 避免與 Vercel 預設入口名稱 "handler" 衝突
 line_handler = WebhookHandler(CHANNEL_SECRET or "placeholder-secret")
 
 
-# ── 路由（統一入口：/ 對應外部 /api）────────────────────────────────────────
-@app.route("/", methods=["GET", "HEAD", "POST"], strict_slashes=False)
-def api_entry():
-    # GET/HEAD：給瀏覽器與 LINE 後台 Verify 用
-    if request.method in ("GET", "HEAD"):
-        return "OK", 200
-
-    # POST：LINE 平台事件
+def _handle_line_post():
+    """統一處理 LINE 平台的 POST 請求"""
     if not HAS_CREDS:
         return jsonify(error="Missing LINE_CHANNEL_ACCESS_TOKEN or LINE_CHANNEL_SECRET"), 500
 
@@ -63,17 +52,48 @@ def api_entry():
     try:
         line_handler.handle(body, signature)
     except InvalidSignatureError:
+        # 沒帶/錯誤簽章 → 400（LINE Verify 不會打 POST，所以不影響）
         abort(400)
 
     return "OK", 200
 
 
-# ── 事件處理 ─────────────────────────────────────────────────────────────────
+# ================= 路由：完整相容（/、/api、/webhook、/api/webhook） =================
+
+# 根路徑：瀏覽器/健檢可用
+@app.route("/", methods=["GET", "HEAD"], strict_slashes=False)
+def root_ok():
+    return "OK", 200
+
+# 將 /api 當 webhook 入口（建議 Webhook 設這個）
+@app.route("/api", methods=["GET", "HEAD", "POST"], strict_slashes=False)
+def api_entry():
+    if request.method in ("GET", "HEAD"):
+        # 給瀏覽器與 LINE 後台 Verify 用
+        return "OK", 200
+    return _handle_line_post()
+
+# 若你堅持用 /api/webhook，也支援
+@app.route("/api/webhook", methods=["GET", "HEAD", "POST"], strict_slashes=False)
+def api_webhook_entry():
+    if request.method in ("GET", "HEAD"):
+        return "OK", 200
+    return _handle_line_post()
+
+# 若有其他服務打到 /webhook（少見），一樣支援
+@app.route("/webhook", methods=["GET", "HEAD", "POST"], strict_slashes=False)
+def webhook_entry():
+    if request.method in ("GET", "HEAD"):
+        return "OK", 200
+    return _handle_line_post()
+
+
+# ================= 事件處理 =================
+
 @line_handler.add(MessageEvent, message=TextMessageContent)
 def on_text(event: MessageEvent):
     text = (event.message.text or "").strip()
 
-    # Flex 選單
     if text.lower() in {"menu", "選單"}:
         flex_contents = {
             "type": "bubble",
@@ -98,24 +118,14 @@ def on_text(event: MessageEvent):
                 "layout": "vertical",
                 "spacing": "sm",
                 "contents": [
-                    {
-                        "type": "button",
-                        "style": "primary",
-                        "action": {"type": "postback", "label": "說明 / Help", "data": "action=help"},
-                    },
-                    {
-                        "type": "button",
-                        "style": "secondary",
-                        "action": {
-                            "type": "uri",
-                            "label": "LINE Bot Docs",
-                            "uri": "https://developers.line.biz/en/docs/messaging-api/overview/",
-                        },
-                    },
+                    {"type": "button", "style": "primary",
+                     "action": {"type": "postback", "label": "說明 / Help", "data": "action=help"}},
+                    {"type": "button", "style": "secondary",
+                     "action": {"type": "uri", "label": "LINE Bot Docs",
+                                "uri": "https://developers.line.biz/en/docs/messaging-api/overview/"}},
                 ],
             },
         }
-
         with ApiClient(configuration) as api_client:
             MessagingApi(api_client).reply_message(
                 ReplyMessageRequest(
@@ -125,7 +135,6 @@ def on_text(event: MessageEvent):
             )
         return
 
-    # 一般回聲
     with ApiClient(configuration) as api_client:
         MessagingApi(api_client).reply_message(
             ReplyMessageRequest(reply_token=event.reply_token, messages=[TextMessage(text=text)])
@@ -138,7 +147,6 @@ def on_sticker(event: MessageEvent):
         MessagingApi(api_client).reply_message(
             ReplyMessageRequest(
                 reply_token=event.reply_token,
-                # v3 參數名稱為 snake_case（非 packageId/stickerId）
                 messages=[StickerMessage(package_id="11537", sticker_id="52002734")],
             )
         )
@@ -148,7 +156,10 @@ def on_sticker(event: MessageEvent):
 def on_image(event: MessageEvent):
     with ApiClient(configuration) as api_client:
         MessagingApi(api_client).reply_message(
-            ReplyMessageRequest(reply_token=event.reply_token, messages=[TextMessage(text="收到圖片啦 📷")])
+            ReplyMessageRequest(
+                reply_token=event.reply_token,
+                messages=[TextMessage(text="收到圖片啦 📷")]
+            )
         )
 
 
@@ -166,8 +177,9 @@ def on_postback(event: PostbackEvent):
         else:
             MessagingApi(api_client).reply_message(
                 ReplyMessageRequest(
-                    reply_token=event.reply_token, messages=[TextMessage(text=f"Postback 收到：{data}")]
+                    reply_token=event.reply_token,
+                    messages=[TextMessage(text=f"Postback 收到：{data}")],
                 )
             )
 
-# 注意：在 Vercel（Serverless）環境切勿使用 app.run()
+# 別加 app.run()（Serverless 不需要）
