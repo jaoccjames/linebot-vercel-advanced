@@ -48,16 +48,14 @@ line_handler = WebhookHandler(CHANNEL_SECRET or "placeholder-secret")
 
 # ── 路由 ─────────────────────────────────────────────────────────────────────
 @app.get("/")
+@app.get("/api")  # 兼容 Vercel 可能保留 /api 前綴的情況
 def health():
-    """健康檢查：在 Vercel 對應為 /api"""
     return "OK", 200
 
-
 @app.post("/webhook")
+@app.post("/api/webhook")  # 兼容帶 /api 前綴
 def webhook():
-    """LINE Webhook 入口：在 Vercel 對應為 /api/webhook"""
     if not HAS_CREDS:
-        # 未設定金鑰就拒絕（避免 500）
         return jsonify(error="Missing LINE_CHANNEL_ACCESS_TOKEN or LINE_CHANNEL_SECRET"), 500
 
     signature = request.headers.get("X-Line-Signature", "")
