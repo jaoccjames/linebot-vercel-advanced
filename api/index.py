@@ -46,27 +46,25 @@ configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
 line_handler = WebhookHandler(CHANNEL_SECRET or "placeholder-secret")
 
 
-# ── 路由 ─────────────────────────────────────────────────────────────────────
-@app.get("/")
-@app.get("/api")  # 兼容 Vercel 可能保留 /api 前綴的情況
-def health():
-    return "OK", 200
-
-# ✅ 將 /api 當 Webhook 入口（GET/HEAD 用於 Verify，POST 用於事件）
-@app.route("/api", methods=["GET", "HEAD", "POST"], strict_slashes=False)
+# ── 路由（統一入口：/ 對應外部 /api）────────────────────────────────────────
+@app.route("/", methods=["GET", "HEAD", "POST"], strict_slashes=False)
 def api_entry():
+    # GET/HEAD：給瀏覽器與 LINE 後台 Verify 用
     if request.method in ("GET", "HEAD"):
         return "OK", 200
 
+    # POST：LINE 平台事件
     if not HAS_CREDS:
         return jsonify(error="Missing LINE_CHANNEL_ACCESS_TOKEN or LINE_CHANNEL_SECRET"), 500
 
     signature = request.headers.get("X-Line-Signature", "")
     body = request.get_data(as_text=True)
+
     try:
         line_handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
+
     return "OK", 200
 
 
