@@ -52,15 +52,15 @@ line_handler = WebhookHandler(CHANNEL_SECRET or "placeholder-secret")
 def health():
     return "OK", 200
 
-# ✅ Webhook：同時支援 GET（給 LINE Verify）與 POST（正式事件）
-@app.route("/webhook", methods=["GET", "POST"])
-@app.route("/api/webhook", methods=["GET", "POST"])
+# ✅ Webhook：同時支援 GET/HEAD/POST，且不在意結尾斜線
+@app.route("/webhook", methods=["GET", "HEAD", "POST"], strict_slashes=False)
+@app.route("/api/webhook", methods=["GET", "HEAD", "POST"], strict_slashes=False)
 def webhook():
-    if request.method == "GET":
-        # LINE Developers → Verify 只要 200 就會通過
+    if request.method in ("GET", "HEAD"):
+        # 給 LINE Developers「Verify」用；回 200 即通過
         return "OK", 200
 
-    # 以下是 POST 的實際事件處理
+    # 以下是 POST 的實際事件處理（LINE 平台推送事件）
     if not HAS_CREDS:
         return jsonify(error="Missing LINE_CHANNEL_ACCESS_TOKEN or LINE_CHANNEL_SECRET"), 500
 
