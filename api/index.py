@@ -42,8 +42,8 @@ HAS_CREDS = bool(CHANNEL_ACCESS_TOKEN and CHANNEL_SECRET)
 # SDK 設定，Messaging API 會在使用時建立連線
 configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
 
-# 用於簽章驗證與事件派發
-handler = WebhookHandler(CHANNEL_SECRET or "placeholder-secret")
+# 重要：避免與 Vercel 的入口名稱 "handler" 衝突，改名為 line_handler
+line_handler = WebhookHandler(CHANNEL_SECRET or "placeholder-secret")
 
 
 # ── 路由 ─────────────────────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ def webhook():
     body = request.get_data(as_text=True)
 
     try:
-        handler.handle(body, signature)
+        line_handler.handle(body, signature)
     except InvalidSignatureError:
         app.logger.warning("Invalid signature.")
         abort(400)
@@ -73,7 +73,7 @@ def webhook():
 
 
 # ── 事件處理 ─────────────────────────────────────────────────────────────────
-@handler.add(MessageEvent, message=TextMessageContent)
+@line_handler.add(MessageEvent, message=TextMessageContent)
 def on_text(event: MessageEvent):
     text = (event.message.text or "").strip()
 
@@ -136,7 +136,7 @@ def on_text(event: MessageEvent):
         )
 
 
-@handler.add(MessageEvent, message=StickerMessageContent)
+@line_handler.add(MessageEvent, message=StickerMessageContent)
 def on_sticker(event: MessageEvent):
     with ApiClient(configuration) as api_client:
         MessagingApi(api_client).reply_message(
@@ -148,7 +148,7 @@ def on_sticker(event: MessageEvent):
         )
 
 
-@handler.add(MessageEvent, message=ImageMessageContent)
+@line_handler.add(MessageEvent, message=ImageMessageContent)
 def on_image(event: MessageEvent):
     with ApiClient(configuration) as api_client:
         MessagingApi(api_client).reply_message(
@@ -156,7 +156,7 @@ def on_image(event: MessageEvent):
         )
 
 
-@handler.add(PostbackEvent)
+@line_handler.add(PostbackEvent)
 def on_postback(event: PostbackEvent):
     data = (event.postback.data or "").strip()
     with ApiClient(configuration) as api_client:
@@ -173,6 +173,5 @@ def on_postback(event: PostbackEvent):
                     reply_token=event.reply_token, messages=[TextMessage(text=f"Postback 收到：{data}")]
                 )
             )
-
 
 # 注意：在 Vercel（Serverless）環境切勿使用 app.run()
