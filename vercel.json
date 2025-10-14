@@ -5,3 +5,14 @@
     { "source": "/app", "destination": "/api" }
   ]
 }
+
+{
+  "functions": {
+    "api/*.js": { "runtime": "nodejs18.x", "maxDuration": 10 },
+    "api/*.py": { "runtime": "python3.11", "maxDuration": 10 }
+  },
+  "regions": ["hnd1", "sin1"],
+  "routes": [
+    { "src": "/api/line-webhook", "dest": "/api/line-webhook.js" }
+  ]
+}
