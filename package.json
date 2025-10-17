@@ -1,15 +1,15 @@
 {
-  "name": "linebot-vercel-advanced-js",
-  "version": "0.1.0",
-  "private": true,
-  "main": "api/line-webhook.js",
-  "scripts": {
-    "dev": "vercel dev",
-    "start": "vercel dev"
-  },
-  "dependencies": {
-    "@vercel/node": "^3.2.0",
-    "@line/bot-sdk": "^9.0.0",
-    "openai": "^4.60.0"
-  }
+"name": "linebot-vercel-advanced-js",
+"version": "0.1.0",
+"private": true,
+"main": "api/line-webhook.js",
+"scripts": {
+"dev": "vercel dev",
+"start": "vercel dev"
+},
+"dependencies": {
+"@vercel/node": "^3.2.0",
+"@line/bot-sdk": "^9.0.0",
+"openai": "^4.60.0"
+}
 }
