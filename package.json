@@ -11,9 +11,5 @@
     "@vercel/node": "^3.2.0",
     "@line/bot-sdk": "^9.0.0",
     "openai": "^4.60.0"
-  },
-  
-  "engines": {
-    "node": "18.x"
   }
 }
