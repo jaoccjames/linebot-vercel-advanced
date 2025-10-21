@@ -1,11 +1,8 @@
 {
   "functions": {
-    // 正確的 Node.js 運行時格式
     "api/*.js": { "runtime": "@vercel/node@3.0.0", "maxDuration": 10 },
-    // 正確的 Python 運行時格式
     "api/*.py": { "runtime": "@vercel/python@3.11.4", "maxDuration": 10 }
   },
-  // 由於免費方案限制，移除 "regions" 屬性
   "routes": [
     { "src": "/api/line-webhook", "dest": "/api/line-webhook.js" }
   ]
