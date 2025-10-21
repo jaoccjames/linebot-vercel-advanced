@@ -12,7 +12,7 @@
     "@line/bot-sdk": "^9.0.0",
     "openai": "^4.60.0"
   },
-  // *** 新增這一行：強制使用 Node.js 18.x ***
+  
   "engines": {
     "node": "18.x"
   }
