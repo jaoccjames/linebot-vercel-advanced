@@ -6,7 +6,7 @@
 - `flex_samples/menu.json` — editable Flex JSON
 - `requirements.txt`, `.gitignore`, `pyproject.toml`
 
-## Deploy
+## Deploy 
 1) Push this folder to GitHub → Import to Vercel (Project → New).
 2) Set Environment Variables:
    - `LINE_CHANNEL_SECRET`
