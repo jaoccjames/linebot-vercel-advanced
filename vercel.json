@@ -1,8 +1,10 @@
 {
   "functions": {
     "api/*.js": { "runtime": "nodejs18.x", "maxDuration": 10 },
-    "api/*.py": { "runtime": "python3.11", "maxDuration": 10 }
+    "api/*.py": { "runtime": "python3.11", "maxDuration": 10 }  // <--- 舊格式
   },
+  // ...
+}
   "routes": [
     { "src": "/api/line-webhook", "dest": "/api/line-webhook.js" }
   ]
