@@ -3,5 +3,9 @@
     "api/line-webhook.js": {
       "maxDuration": 10
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/webhook", "destination": "/api/line-webhook" },
+    { "source": "/webhook", "destination": "/api/line-webhook" }
+  ]
 }
