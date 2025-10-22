@@ -1,8 +1,8 @@
 {
   "functions": {
-    "api/*.js": { "runtime": "nodejs20.x", "maxDuration": 10 }
-  },
-  "routes": [
-    { "src": "/api/line-webhook", "dest": "/api/line-webhook.js" }
-  ]
+    "api/*.js": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 10
+    }
+  }
 }
