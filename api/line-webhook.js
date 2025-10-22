@@ -1,12 +1,18 @@
-// api/line-webhook.js — 完整除錯版：顯示詳細流程與錯誤記錄，方便於 Vercel Logs 檢查
+// api/line-webhook.js — 修正版：支援 GET 和 POST
 const { verifyLineSignature, replyText } = require('../lib/line');
 const { chatWithModel } = require('../lib/openai');
 
 module.exports = async function handler(req, res) {
   try {
-    // 確認請求方法
+    // 支援 GET 請求（瀏覽器測試 & LINE Webhook 驗證）
+    if (req.method === 'GET' || req.method === 'HEAD') {
+      console.log('✅ GET/HEAD 請求 - 回傳 OK');
+      return res.status(200).send('Webhook is running');
+    }
+
+    // 只處理 POST 請求
     if (req.method !== 'POST') {
-      console.log('❌ 非 POST 請求：', req.method);
+      console.log('❌ 不支援的請求方法：', req.method);
       return res.status(405).send('Method Not Allowed');
     }
 
@@ -66,6 +72,6 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     // 捕捉所有未預期錯誤
     console.error('🔥 全域錯誤捕捉：', err);
-    return res.status(500).send('Internal Server Error');
+    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
   }
 };
