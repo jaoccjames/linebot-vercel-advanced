@@ -21,6 +21,7 @@ async function checkRelevanceWithModel(userText) {
 
 輸出規則（非常重要）：
 - 僅輸出一段 JSON，無任何其他文字、註解或解釋。其中，中文字必須是繁體中文，不可有簡體字。
+- 輸出內容必須為直述句，可以有建議，但絕不可有任何反問句。
 - JSON 格式必須為：
   {"related": boolean, "score": number, "reason": string}
 - "score" 範圍 0~1，越高代表與主題關聯越強。
