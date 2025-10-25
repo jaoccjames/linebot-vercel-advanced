@@ -122,7 +122,7 @@ module.exports = async function handler(req, res) {
         // 你可調整門檻；此處採 0.6
         const PASS_THRESHOLD = 0.6;
         if (!related || score < PASS_THRESHOLD) {
-          await replyText(event.replyToken, '您的問題與內政大數據無關，恕不回覆。');
+          await replyText(event.replyToken, '請點選選單，或提出與內政大數據相關問題 。');
           return res.status(200).send('OK');
         }
 
